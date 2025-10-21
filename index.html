@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clasificador de Deportes IA (V1)</title>
+    
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        #container {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            width: 90%;
+            max-width: 500px;
+        }
+        h1 {
+            color: #1c1e21;
+            margin-bottom: 25px;
+        }
+        #image-preview {
+            max-width: 100%;
+            height: auto;
+            margin-top: 20px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+        }
+        #label-container {
+            margin-top: 25px;
+            font-size: 1.2em;
+            color: #333;
+        }
+        .prediction {
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        input[type="file"] {
+            display: none; 
+        }
+        
+        .custom-file-upload {
+            background-color: #007bff;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            display: inline-block;
+            transition: background-color 0.3s;
+        }
+        .custom-file-upload:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="container">
+        <h1>Clasificador de Deportes 🏅</h1>
+        
+        <label for="imageUpload" class="custom-file-upload">
+            Sube una imagen de un deporte
+        </label>
+        <input type="file" id="imageUpload" accept="image/*" onchange="readImage(this)">
+
+        <div>
+            <img id="image-preview" src="" alt="Vista previa de la imagen" style="display:none;"/>
+        </div>
+
+        <div id="label-container">Presiona "Subir" para ver la predicción</div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
+
+    <script type="text/javascript">
+        
+        const URL = "https://teachablemachine.withgoogle.com/models/eLc_MRtnC/";
+
+        let model, labelContainer, maxPredictions;
+
+        async function init() {
+            const modelURL = URL + "model.json";
+            const metadataURL = URL + "metadata.json";
+
+            model = await tmImage.load(modelURL, metadataURL);
+            maxPredictions = model.getTotalClasses();
+            
+            labelContainer = document.getElementById("label-container");
+            labelContainer.innerHTML = "¡Modelo cargado! Sube una imagen.";
+        }
+
+        async function predict(imageElement) {
+            
+            const prediction = await model.predict(imageElement);
+            
+            labelContainer.innerHTML = ""; 
+            
+            for (let i = 0; i < maxPredictions; i++) {
+              
+                const classPrediction =
+                    prediction[i].className + ": " + (prediction[i].probability * 100).toFixed(0) + "%";
+                
+                const predElement = document.createElement("div");
+                predElement.className = "prediction";
+                predElement.innerHTML = classPrediction;
+                labelContainer.appendChild(predElement);
+            }
+        }
+        
+        function readImage(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    const imgElement = document.getElementById("image-preview");
+                    imgElement.src = e.target.result;
+                    imgElement.style.display = "block"; 
+                    
+                    predict(imgElement); 
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+        
+        window.onload = () => {
+             init();
+        };
+        
+    </script>
+</body>
+</html>
